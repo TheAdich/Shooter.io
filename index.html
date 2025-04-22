@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>2D Shooter Game</title>
+</head>
+
+<body>
+    <div id="game-container"
+        style="width:100% ; height:100vh ; display: flex; justify-content: center; align-items: center;">
+        <canvas id="game-canvas" width="500" height="500"></canvas>
+    </div>
+    <script type="importmap">
+        {
+          "imports": {
+            "socket.io-client": "https://cdn.socket.io/4.8.1/socket.io.esm.min.js"
+          }
+        }
+      </script>
+    <script type="module" src='./main.js'></script>
+</body>
+
+</html>
