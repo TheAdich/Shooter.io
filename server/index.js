@@ -2,6 +2,8 @@ const express=require('express');
 const cors=require('cors');
 const {createServer}=require('http');
 const {Server}=require('socket.io');
+const {getNextMove}=require('./aiPathFinding');
+
 const app=express();
 const server=createServer(app);
 app.use(cors(
@@ -21,6 +23,7 @@ const io=new Server(server,{
 });
 
 let players={};
+let aiPlayer=null;
 let obstacles=[];
 //Server Side Obstacle Generation
 const genrateObstacles=(rows,cols,obstacleCount)=>{
@@ -34,6 +37,27 @@ const genrateObstacles=(rows,cols,obstacleCount)=>{
 }
 
 genrateObstacles(27,27,75);
+
+const checkAiPlayerPosition=(aiPlayer)=>{
+    while(true){
+        let isValid = true;
+        for (let otherPlayer of Object.values(players)) {
+            if (otherPlayer.id !== aiPlayer.id &&
+                otherPlayer.row === aiPlayer.row &&
+                otherPlayer.col === aiPlayer.col) {
+                isValid = false;
+                break;
+            }
+        }
+        if (isValid) break;
+    
+        // Generate new position
+        aiPlayer.row = Math.floor(Math.random() * 27);
+        aiPlayer.col = Math.floor(Math.random() * 27);
+    }
+}
+
+
 
 io.on('connection',(socket)=>{
     //Initializing grid and obstacles
@@ -49,7 +73,7 @@ io.on('connection',(socket)=>{
         imgDirection:'down'
     }
     //Check if player created is on fresh grid or not otherwise genrate random position till condition is not satisfied
-    while (true) {
+    while(true){
         let isValid = true;
         for (let otherPlayer of Object.values(players)) {
             if (otherPlayer.id !== socket.id &&
@@ -65,10 +89,19 @@ io.on('connection',(socket)=>{
         players[socket.id].row = Math.floor(Math.random() * 27);
         players[socket.id].col = Math.floor(Math.random() * 27);
     }
-    
+    //Initializing ai player
+    aiPlayer={
+        id:'aiPlayer',
+        row:Math.floor(Math.random()*27),
+        col:Math.floor(Math.random()*27),
+        imgDirection:'down'
+    }
+    //Check if ai player created is on fresh grid or not otherwise genrate random position till condition is not satisfied
+    checkAiPlayerPosition(aiPlayer);
     //Sending exisitng players to the new player
     socket.emit('yourPlayer',players[socket.id]);
     socket.emit('existingPlayers',players);
+    socket.emit('aiPlayer',aiPlayer);
     //Sending new player to all other players
     socket.broadcast.emit('newPlayer',{
         id:socket.id,
@@ -107,8 +140,23 @@ io.on('connection',(socket)=>{
         socket.broadcast.emit('playerDisconnected',socket.id);
         console.log('Player disconnected:',socket.id);
     })
+
+    //Listening for ai player movement
+    socket.on('aiPlayerMovement',(data)=>{
+        const nextMove=getNextMove(data.aiPlayer,data.player,data.obstacles);
+        if (nextMove) {
+            data.aiPlayer.row = nextMove.row;
+            data.aiPlayer.col = nextMove.col;
+            socket.emit('aiPlayerMoved',data.aiPlayer);
+        }
+    })
 })
 
 server.listen(5000,()=>{
     console.log('Server is running on port 5000');
 })
+
+module.exports={
+    obstacles,
+    aiPlayer
+}
