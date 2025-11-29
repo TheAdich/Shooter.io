@@ -204,12 +204,6 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-//ai player movement
-setInterval(() => {
-    if (isAiPlayerInitialized) {
-        socket.emit('aiPlayerMovement', { obstacles, player, aiPlayer });
-    }
-}, 400)
 
 //Player movement
 document.addEventListener('keydown', (event) => {
@@ -285,7 +279,7 @@ socket.on('aiPlayerMoved', (aiPlayerData) => {
         aiPlayer.img=CPUImage_Right;
     }
     
-    animateMovement(aiPlayer, aiPlayerData.row, aiPlayerData.col, true);
+    animateMovement(aiPlayer, aiPlayerData.row, aiPlayerData.col);
 })
 
 socket.on('obstacles', (obstacleData) => {
@@ -313,9 +307,8 @@ socket.on('newPlayer', (playerData) => {
     otherPlayers[playerData.id] = player;
 })
 
-function animateMovement(player, targetRow, targetCol, isAiPlayer) {
-    //delay movement if it is ai player
-    if (isAiPlayer) {
+function animateMovement(player, targetRow, targetCol) {
+    
 
         const targetX = targetCol * CELL_SIZE;
         const targetY = targetRow * CELL_SIZE;
@@ -343,42 +336,13 @@ function animateMovement(player, targetRow, targetCol, isAiPlayer) {
         }
         requestAnimationFrame(animate);
 
-    }
-    else {
-        const targetX = targetCol * CELL_SIZE;
-        const targetY = targetRow * CELL_SIZE;
-        const startX = player.col * CELL_SIZE;
-        const startY = player.row * CELL_SIZE;
-
-        const startTime = performance.now();
-
-        const animate = (currentTime) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / 100, 1); 
-
-            player.pixelX = startX + (targetX - startX) * progress;
-            player.pixelY = startY + (targetY - startY) * progress;
-
-            player.draw();
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                player.row = targetRow;
-                player.col = targetCol;
-                player.pixelX = targetX;
-                player.pixelY = targetY;
-            }
-        };
-        requestAnimationFrame(animate);
-    }
 }
 socket.on('playerMoved', (data) => {
     if (otherPlayers[data.id]) {
         
         otherPlayers[data.id].img = data.imgDirection === 'up' ? PlayerImage_Up : data.imgDirection === 'down' ? PlayerImage_Down : data.imgDirection === 'left' ? PlayerImage_Left : PlayerImage_Right;
 
-        animateMovement(otherPlayers[data.id], data.row, data.col, false);
+        animateMovement(otherPlayers[data.id], data.row, data.col);
     }
     else {
         const player = new Player(data.row, data.col, PlayerImage_Down);
