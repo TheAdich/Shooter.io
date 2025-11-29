@@ -34,10 +34,9 @@ Your game is ready.
 
 ## Additional Details
 ### How It Works
-- The server runs a fixed-tick game loop.
-- Clients send only movement + shoot events.
-- Server simulates all physics, AI, and collisions.
-- Clients render the authoritative state using Canvas.
+- It's a client side authorative game
+- All validation happens on client-side ( in future it would be migrated to server-side authorization)
+- server manages socket connection and brodcasting updated events to other clients
 
 ### CPU Bot (A* Pathfinding)
 - Map is converted into a grid.
